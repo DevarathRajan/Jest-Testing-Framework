@@ -1,0 +1,383 @@
+
+SETUP INSTRUCTIONS
+
+## Project Structure
+
+```
+tic-tac-toe-game/
+├── backend/
+│   ├── server.js
+│   ├── package.json
+│   ├── .env
+│   ├── routes/
+│   │   └── gameRoutes.js
+│   ├── controllers/
+│   │   └── gameController.js
+│   └── utils/
+│       └── gameLogic.js
+└── frontend/
+    ├── src/
+    │   ├── App.jsx
+    │   ├── App.css
+    │   ├── main.jsx
+    │   ├── components/
+    │   │   ├── Board.jsx
+    │   │   ├── Board.css
+    │   │   ├── Cell.jsx
+    │   │   ├── Cell.css
+    │   │   ├── GameControls.jsx
+    │   │   └── GameControls.css
+    │   └── services/
+    │       └── apiService.js
+    ├── index.html
+    ├── package.json
+    └── vite.config.js
+```
+
+## Backend Setup
+
+### 1. Create Backend Directory
+```bash
+mkdir backend
+cd backend
+```
+
+### 2. Initialize Node.js Project
+```bash
+npm init -y
+```
+
+### 3. Install Dependencies
+```bash
+npm install express cors dotenv uuid axios
+npm install --save-dev nodemon
+```
+
+### 4. Create Directory Structure
+```bash
+mkdir routes controllers utils
+```
+
+### 5. Create .env File
+Create a `.env` file with:
+```
+PORT=5000
+NODE_ENV=development
+CLIENT_URL=http://localhost:5173
+
+# AI Agent Configuration (optional)
+AI_AGENT_URL=http://localhost:8000/predict
+AI_AGENT_API_KEY=your_api_key_here
+AI_AGENT_TIMEOUT=5000
+```
+
+### 6. Update package.json
+Add to scripts:
+```json
+"scripts": {
+  "start": "node server.js",
+  "dev": "nodemon server.js"
+}
+```
+Add: `"type": "module"`
+
+### 7. Run Backend Server
+```bash
+npm run dev
+```
+Server will run on http://localhost:5000
+
+## Frontend Setup
+
+### 1. Create Frontend with Vite
+```bash
+npm create vite@latest frontend -- --template react
+cd frontend
+```
+
+### 2. Install Dependencies
+```bash
+npm install axios
+```
+
+### 3. Create Directory Structure
+```bash
+mkdir -p src/components src/services
+```
+
+### 4. Create .env File
+Create a `.env` file in frontend root:
+```
+VITE_API_URL=http://localhost:5000/api
+```
+
+### 5. Create index.html
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tic-Tac-Toe with AI</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
+```
+
+### 6. Create main.jsx
+```javascript
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App'
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+)
+```
+
+### 7. Run Frontend
+```bash
+npm run dev
+```
+Frontend will run on http://localhost:5173
+
+## Testing the Application
+
+### 1. Test Backend Endpoints
+
+**Health Check:**
+```bash
+curl http://localhost:5000/health
+```
+
+**Create New Game:**
+```bash
+curl -X POST http://localhost:5000/api/game/new \
+  -H "Content-Type: application/json" \
+  -d '{"playerSymbol":"X"}'
+```
+
+**Make a Move:**
+```bash
+curl -X POST http://localhost:5000/api/game/move \
+  -H "Content-Type: application/json" \
+  -d '{
+    "gameId":"your-game-id",
+    "position":0,
+    "player":"X"
+  }'
+```
+
+**Request AI Move:**
+```bash
+curl -X POST http://localhost:5000/api/game/ai-move \
+  -H "Content-Type: application/json" \
+  -d '{
+    "board":[null,null,null,null,null,null,null,null,null],
+    "aiSymbol":"O",
+    "difficulty":"medium"
+  }'
+```
+
+### 2. Test Frontend
+1. Open http://localhost:5173 in your browser
+2. Choose your symbol (X or O)
+3. Select AI difficulty
+4. Play the game!
+
+## AI Agent Integration
+
+The backend is designed to send API requests to an external AI agent for move predictions.
+
+### AI Agent API Specification
+
+**Endpoint:** `POST /predict` (or your custom endpoint)
+
+**Request Body:**
+```json
+{
+  "board": "X_O______",
+  "boardArray": ["X", null, "O", null, null, null, null, null, null],
+  "availableMoves": [1, 3, 4, 5, 6, 7, 8],
+  "aiSymbol": "O",
+  "playerSymbol": "X",
+  "difficulty": "medium",
+  "statistics": {
+    "xCount": 1,
+    "oCount": 1,
+    "emptyCount": 7,
+    "moveNumber": 2
+  },
+  "timestamp": "2025-11-16T10:25:00.000Z"
+}
+```
+
+**Response Format:**
+```json
+{
+  "position": 4,
+  "confidence": 0.85,
+  "reasoning": "Center position for strategic advantage"
+}
+```
+
+### Integration Steps
+
+1. **Set up your AI agent** with the above API specification
+2. **Configure .env** with your AI agent URL and API key
+3. **Backend will automatically call** your AI agent when requesting moves
+4. **Fallback mechanism** uses random moves if AI agent is unavailable
+
+### Example AI Agent (Python Flask)
+
+```python
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+@app.route('/predict', methods=['POST'])
+def predict():
+    data = request.json
+    board = data['boardArray']
+    available_moves = data['availableMoves']
+
+    # Your AI logic here
+    # For example, use minimax, neural network, etc.
+    predicted_move = your_ai_model.predict(board)
+
+    return jsonify({
+        'position': predicted_move,
+        'confidence': 0.85
+    })
+
+if __name__ == '__main__':
+    app.run(port=8000)
+```
+
+## API Documentation
+
+### Endpoints
+
+#### 1. Create New Game
+- **URL:** `POST /api/game/new`
+- **Body:** `{ "playerSymbol": "X" | "O" }`
+- **Response:** Game object
+
+#### 2. Make Move
+- **URL:** `POST /api/game/move`
+- **Body:** `{ "gameId": "uuid", "position": 0-8, "player": "X" | "O" }`
+- **Response:** Updated game object
+
+#### 3. Request AI Move
+- **URL:** `POST /api/game/ai-move`
+- **Body:** `{ "board": Array[9], "aiSymbol": "X" | "O", "difficulty": "easy" | "medium" | "hard" }`
+- **Response:** `{ "position": 0-8, "board": Array[9], "confidence": 0-1 }`
+
+#### 4. Get Game State
+- **URL:** `GET /api/game/:gameId`
+- **Response:** Game object
+
+#### 5. Validate Move
+- **URL:** `POST /api/game/validate`
+- **Body:** `{ "board": Array[9], "position": 0-8 }`
+- **Response:** `{ "valid": boolean, "message": string }`
+
+#### 6. Reset Game
+- **URL:** `POST /api/game/reset/:gameId`
+- **Response:** Reset game object
+
+## Features
+
+### Implemented Features
+✅ Complete React frontend with component structure
+✅ Node.js Express backend with REST APIs
+✅ Game state management
+✅ Win/draw detection
+✅ Move validation
+✅ AI integration endpoint (ready for external AI agent)
+✅ Multiple difficulty levels
+✅ Player vs AI mode
+✅ Responsive design
+✅ Error handling
+✅ Loading states
+
+### Frontend Features
+- Interactive game board
+- Real-time move updates
+- Winning line highlighting
+- Symbol selection (X or O)
+- Difficulty selection
+- Game mode selection
+- Reset functionality
+- Beautiful animations
+
+### Backend Features
+- RESTful API design
+- In-memory game storage (easily replaceable with database)
+- Complete game logic
+- AI agent integration point
+- Move validation
+- Game state persistence
+- Error handling
+- CORS support
+
+## Deployment
+
+### Backend Deployment (e.g., Heroku, Railway, Render)
+1. Set environment variables on hosting platform
+2. Deploy from GitHub repository
+3. Update CLIENT_URL to production frontend URL
+
+### Frontend Deployment (e.g., Vercel, Netlify)
+1. Set VITE_API_URL to production backend URL
+2. Build: `npm run build`
+3. Deploy dist folder
+
+## Troubleshooting
+
+### Common Issues
+
+1. **CORS Error**
+   - Check backend CORS configuration
+   - Ensure CLIENT_URL matches frontend URL
+
+2. **API Connection Failed**
+   - Verify backend is running
+   - Check VITE_API_URL in frontend .env
+
+3. **AI Agent Not Responding**
+   - Backend will fallback to random moves
+   - Check AI_AGENT_URL configuration
+   - Verify AI agent is running
+
+4. **Port Already in Use**
+   - Change PORT in backend .env
+   - Update VITE_API_URL in frontend .env
+
+## Next Steps
+
+1. **Implement AI Agent** with your preferred algorithm (minimax, neural network, etc.)
+2. **Add Database** for persistent game storage (MongoDB, PostgreSQL, etc.)
+3. **Add Authentication** for user accounts
+4. **Add Multiplayer** using WebSockets (Socket.io)
+5. **Add Game History** to track player statistics
+6. **Add Leaderboard** for competitive play
+7. **Add Sound Effects** and animations
+8. **Add Mobile App** using React Native
+
+## Resources
+
+- [Express.js Documentation](https://expressjs.com/)
+- [React Documentation](https://react.dev/)
+- [Axios Documentation](https://axios-http.com/)
+- [Vite Documentation](https://vitejs.dev/)
+- [Minimax Algorithm](https://en.wikipedia.org/wiki/Minimax)
+
+## License
+
+MIT License - feel free to use this project for learning or commercial purposes.
