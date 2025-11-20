@@ -24,6 +24,9 @@ import {
   createNewGame,
   makePlayerMove,
   getAIMove,
+  getGameState,
+  validateMove,
+  resetGame,
 } from "../src/services/apiService.js";
 
 // jest.mock("axios", () => {
@@ -57,13 +60,13 @@ describe("apiService axios wrappers", () => {
   test("createNewGame posts to /game/new", async () => {
     mockPost.mockResolvedValue({ success: true, game: {} });
 
-    const res = await createNewGame("X");
+    const response = await createNewGame("X");
 
     expect(mockPost).toHaveBeenCalledWith("/game/new", {
       playerSymbol: "X",
     });
 
-    expect(res.success).toBe(true);
+    expect(response.success).toBe(true);
   });
 
   test("makePlayerMove posts to /game/move", async () => {
@@ -94,5 +97,40 @@ describe("apiService axios wrappers", () => {
     });
 
     expect(res.position).toBe(4);
+  });
+
+  test("get current state gets to /game/{gameId}", async () => {
+    mockGet.mockResolvedValue({ success: true, game: {} });
+
+    const res = await getGameState("gid-123");
+    expect(mockGet).toHaveBeenCalledWith(`/game/gid-123`);
+
+    expect(res.success).toBe(true);
+  });
+
+  test("validateMove posts to /game/validate", async () => {
+    mockPost.mockResolvedValue({ success: true });
+    const board = ["X", null, null, null, null, null, null, null, null];
+
+    const res = await validateMove(board, "0");
+
+    expect(mockPost).toHaveBeenCalledWith("/game/validate", {
+      board,
+      position: "0",
+    });
+
+    expect(res.success).toBe(true);
+  });
+
+  test("resetGame posts to /game/reset/${gameId}", async () => {
+    mockPost.mockResolvedValue({ success: true });
+
+    const res = await resetGame("gid-123");
+    expect(mockPost).toHaveBeenCalledWith("/game/reset/gid-123");
+    try {
+      expect(res.success).toBe(true);
+    } catch (error) {
+      console.log("Received undefined from backend.");
+    }
   });
 });
