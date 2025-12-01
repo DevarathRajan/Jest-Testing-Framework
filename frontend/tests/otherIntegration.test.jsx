@@ -24,12 +24,14 @@ describe("App integration flow (with mocked apiService)", () => {
 
     // mock createNewGame used in useEffect
     api.createNewGame.mockResolvedValue({
+      //mockResolvedValue --> returns the same value always here success true is fixed.
       success: true,
       game: { ...baseGame },
     });
   });
   test("Human vs Human should not trigger AI calls", async () => {
     api.createNewGame.mockResolvedValueOnce({
+      //mockResolvedValueOnce returns different values which helps us mock different responses
       success: true,
       game: { ...baseGame, currentPlayer: "X" },
     });

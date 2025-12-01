@@ -231,7 +231,7 @@ describe("gameController unit tests (real gameLogic)", () => {
     expect(payload.error).toMatch(/not your turn/i);
   });
 
-  // ---------------- requestAIMove (no axios mocking) ----------------
+  // ---------------- requestAIMove (AI failure) ----------------
   test("requestAIMove uses random fallback when no AI_AGENT_URL", async () => {
     const originalEnv = process.env.AI_AGENT_URL;
     delete process.env.AI_AGENT_URL;

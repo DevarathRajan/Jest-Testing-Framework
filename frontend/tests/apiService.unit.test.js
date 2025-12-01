@@ -2,6 +2,7 @@
  * Mock axios entirely before apiService.js loads.
  * This ensures axios.create exists during module initialization.
  */
+//Entire axios instance is mocked wih request and response interceptors telling to use mock fn jest.fn
 jest.mock("axios", () => {
   const mockPost = jest.fn();
   const mockGet = jest.fn();
@@ -15,11 +16,11 @@ jest.mock("axios", () => {
         response: { use: jest.fn() },
       },
     })),
-    __mockPost: mockPost,
+    __mockPost: mockPost, //__mock is used to iterate that this is not an axios property, we are taking out the retured vlaues by using __mock
     __mockGet: mockGet,
   };
 });
-// frontend/__tests__/apiService.test.js
+// frontend/__tests__/apiService.test.js -> Import all functions from apiservice.js for unit testing.
 import {
   createNewGame,
   makePlayerMove,
@@ -47,7 +48,7 @@ import {
 //   };
 // });
 
-// Extract mocks after module load
+// Extract mocks after module load from axios returned value which is then defined inside __mock{method(post or get)}
 import axios from "axios";
 const mockPost = axios.__mockPost;
 const mockGet = axios.__mockGet;
